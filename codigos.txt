@@ -1,0 +1,195 @@
+//***************************Line Sensor************************************************************************************
+
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+Zumo32U4ButtonB buttonB;
+Zumo32U4ButtonC buttonC;
+// Zumo32U4ProximitySensors proxSensors;
+Zumo32U4LineSensors lineSensors;
+unsigned int values [] = {0, 0, 0, 0, 0};
+int line_position = 0;
+
+void setup() {
+  Serial.begin(9600);
+  // proxSensors.initThreeSensors();
+  lineSensors.initFiveSensors();
+}
+
+void loop() {
+
+  if (buttonB.isPressed()) {
+    motors.setSpeeds(100, 100); // Max. 400; Min -400
+    show_lineSensors();
+  } else if (buttonA.isPressed() ) {
+      motors.setSpeeds(-100, 100); // Max. 400; Min -400
+      show_lineSensors();
+  } else if (buttonC.isPressed() ) {
+      motors.setSpeeds(100, -100); // Max. 400; Min -400
+      show_lineSensors();
+  } else {
+      motors.setSpeeds(0, 0); // Max. 400; Min -400
+  }
+  // proxSensors.read();
+  // proxSensors.countsLeftWithLeftLeds(); // See pololu reference
+  lineSensors.read(values, QTR_EMITTERS_ON); // See pololu reference
+  // ledBlue(HIGH);
+  // ledRed(HIGH);
+  // ledBlue(LOW);
+  // ledRed(LOW);
+}
+
+void show_lineSensors() {
+  Serial.print("Line sensor values are ");
+  for (int i = 0; i<4; i++) {
+    Serial.print(values[i]);
+    Serial.print(", ");
+  }
+  Serial.print(values[4]);
+  Serial.println("].");
+  return;
+}
+
+
+
+//***************************Show Sensors************************************************************************************
+
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+unsigned int values[5] = {0,0,0,0,0};
+Zumo32U4ButtonA BA;
+Zumo32U4ButtonB BB;
+Zumo32U4ButtonC BC;
+
+Zumo32U4LineSensors lineSensors;
+Zumo32U4ProximitySensors proxSensors;
+Zumo32U4Motors motors;
+
+char buffer[255];
+long startingTime = 0;
+
+void setup() {
+  Serial.begin(9600);
+  lineSensors.initFiveSensors();
+  proxSensors.initThreeSensors();
+}
+
+void loop() {
+    if(BC.isPressed()) {
+        if (BA.isPressed() && BB.isPressed()) {
+            motors.setLeftSpeed(-100);
+            motors.setRightSpeed(-100);
+        } else {
+            motors.setLeftSpeed(100);
+            motors.setRightSpeed(-100);
+        }
+    }
+    else if(BB.isPressed()) {
+        motors.setLeftSpeed(100);
+        motors.setRightSpeed(100);
+    }
+    else if(BA.isPressed()) {
+        motors.setLeftSpeed(-100);
+        motors.setRightSpeed(100);
+    } else {
+        motors.setLeftSpeed(0);
+        motors.setRightSpeed(0);
+    }
+    
+    long currentTime = millis();
+    if(currentTime - startingTime > 1000) {
+        lineSensors.read(values, QTR_EMITTERS_ON);
+        sprintf(buffer, "Line sensor values: %d %d %d %d %d", values[0], values[1], values[2], values[3], values[4]);
+        Serial.println(buffer);
+        
+        proxSensors.read();
+        Serial.println("Proximity sensors:");
+        Serial.print(" - Left-left: ");
+        Serial.println(proxSensors.countsLeftWithLeftLeds());
+        Serial.print(" - Left-right: ");
+        Serial.println(proxSensors.countsLeftWithRightLeds ());
+        Serial.print(" - Front-left: ");
+        Serial.println(proxSensors.countsFrontWithLeftLeds());
+        Serial.print(" - Front-right: ");
+        Serial.println(proxSensors.countsFrontWithRightLeds());
+        Serial.print(" - Right-left: ");
+        Serial.println(proxSensors.countsRightWithLeftLeds());
+        Serial.print(" - Right-right: ");
+        Serial.println(proxSensors.countsRightWithRightLeds());
+        
+        startingTime = currentTime;
+    }
+}
+
+
+
+//***************************Switches and motors************************************************************************************
+
+
+#include <Wire.h>
+#include <Zumo32U4.h>
+
+Zumo32U4Motors motors;
+Zumo32U4ButtonA buttonA;
+Zumo32U4ButtonB buttonB;
+Zumo32U4ButtonC buttonC;
+// Zumo32U4ProximitySensors proxSensors;
+// Zumo32U4LineSensors lineSensors;
+int wasAnyPressed;
+
+void setup() {
+  Serial.begin(9600);
+  wasAnyPressed = 0;
+  // proxSensors.initThreeSensors();
+  // lineSensors.initFiveSensors();
+}
+
+void loop() {
+
+  if (buttonB.isPressed()) {
+    Serial.println("Moving in line");
+    motors.setSpeeds(100, 100); // Max. 400; Min -400
+    delay(2000);
+    motors.setSpeeds(-100, -100); // Max. 400; Min -400
+    delay(2000);
+    Serial.println("Waiting for commands");
+    motors.setSpeeds(0, 0); // Max. 400; Min -400
+  } else if (buttonA.isPressed() ) {
+      Serial.println("Moving in circle");
+      motors.setSpeeds(25,100); // Max. 400; Min -400
+      delay(10000);
+      Serial.println("Waiting for commands");
+      motors.setSpeeds(0, 0); // Max. 400; Min -400
+  } else if (buttonC.isPressed() ) {
+      Serial.println("Moving in square");
+      for (int i = 0; i<4; i++){
+        motors.setSpeeds(100, 100); // Max. 400; Min -400
+        delay(1000);
+        motors.setSpeeds(-100, 100); // Max. 400; Min -400
+        delay(1000);
+      }
+      Serial.println("Waiting for commands");
+      motors.setSpeeds(0, 0); // Max. 400; Min -400
+  }
+  
+
+  // proxSensors.read();
+  // proxSensors.countsLeftWithLeftLeds(); // See pololu reference
+  // lineSensors.read(values, QTR_EMITTERS_ON); // See pololu reference
+  // ledBlue(HIGH);
+  // ledRed(HIGH);
+  // ledBlue(LOW);
+  // ledRed(LOW);
+}
+
+
+
+
+
+
+
+
+
